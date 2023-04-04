@@ -2,15 +2,15 @@
 
 """
 Usage:
-  ec_finder.py <input_file> <colnum>
+  ec_finder.py [options] <input_file> <colnum>
 
 Arguments
   <input_file>         Path to input file.
   <colnum>             Column number with enzyme names, 1-based.
 
 Options:
-  -m, --min-score=<n>  Minimum score for fuzzy matches [default: 90]
-  -s, --separator=SEP  Separator used in input file [default: \t]
+  -m, --min-score=<n>  Minimum score for fuzzy matches (default: 90)
+  -s, --separator=SEP  Separator used in input file (default: tab)
   -h --help            Show this screen.
   --version            Show version.
 """
@@ -78,21 +78,31 @@ if __name__ == '__main__':
       sys.stderr.write("Column number must be greater than 0. Found: " +\
           arguments["<colnum>"] + "\n")
       sys.exit(1)
-    if not arguments["--min-score"].isdigit():
-      sys.stderr.write("Minimum score must be an integer. Found: " +\
-          arguments["--min-score"] + "\n")
-      sys.exit(1)
-    min_score = int(arguments["--min-score"])
-    if min_score < 0 or min_score > 100:
-      sys.stderr.write("Minimum score must be between 0 and 100. Found: " +\
-          arguments["--min-score"] + "\n")
-      sys.exit(1)
-    separator = arguments["--separator"]
+    if arguments["--min-score"] is None:
+      min_score = 90
+    else:
+      if not arguments["--min-score"].isdigit():
+        sys.stderr.write("Minimum score must be an integer. Found: " +\
+            arguments["--min-score"] + "\n")
+        sys.exit(1)
+      min_score = int(arguments["--min-score"])
+      if min_score < 0 or min_score > 100:
+        sys.stderr.write("Minimum score must be between 0 and 100. Found: " +\
+            arguments["--min-score"] + "\n")
+        sys.exit(1)
+    if arguments["--separator"] is None:
+      separator = "\t"
+    else:
+      separator = arguments["--separator"]
     with open(input_file) as f:
         for line in f:
             line = line.rstrip()
             columns = line.split(separator)
-            enzyme_name = columns[colnum]
-            ec_code_info = ec_finder.search(enzyme_name, min_score)
-            print(ec_code_info + separator + line)
+            if colnum < len(columns):
+              enzyme_name = columns[colnum]
+              ec_code_info = ec_finder.search(enzyme_name, min_score)
+              print(ec_code_info + separator + line)
+            else:
+              print(f"COLUMN_NOT_FOUND:{colnum+1}" + separator + separator +\
+                  separator + line)
 

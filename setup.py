@@ -37,6 +37,6 @@ setup(name='ec_finder',
       zip_safe=False,
       include_package_data=True,
       install_requires=['loguru>=0.5.1', 'docopt>=0.6.2',
-         "sh>=1.14.2", "thefuzz", "PlatformDirs"],
+         "sh>=1.14.2", "thefuzz", "PlatformDirs", "python-Levenshtein"],
       setup_requires=['PlatformDirs'],
     )

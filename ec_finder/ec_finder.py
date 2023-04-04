@@ -12,7 +12,7 @@ __appname__="EcFinder"
 __author__="ggonnella"
 
 ED_BASEFILENAME = "enzyme.dat"
-FTP_URL = "ftp://ftp.expasy.org/databases/enzyme/" + ED_BASEFILENAME
+FTP_URL = "ftp.expasy.org/databases/enzyme/" + ED_BASEFILENAME
 APPDATADIR = Path(PlatformDirs(__appname__, __author__, \
                               version=__version__).user_data_dir)
 ENZYMESDAT = str(APPDATADIR / ED_BASEFILENAME)
@@ -82,11 +82,15 @@ def setup():
   if downloaded:
     logger.info("Downloaded enzyme data file.")
   else:
-    logger.info("ERROR: No enzyme data file found.")
+    logger.error("No enzyme data file found.")
+    raise Exception("No enzyme data file found.")
+  parse_local_enzyme_dat()
 
 def __auto_setup():
-  if not APPDATADIR.exists():
+  if not Path(ENZYMESDAT).exists():
     setup()
+  else:
+    parse_local_enzyme_dat()
 
 def parse_enzyme_dat(enzyme_dat_filename):
     ec_index = {}
