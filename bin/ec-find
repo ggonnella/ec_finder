@@ -1,0 +1,98 @@
+#!/usr/bin/env python
+
+"""
+Usage:
+  ec_finder.py <input_file> <colnum>
+
+Arguments
+  <input_file>         Path to input file.
+  <colnum>             Column number with enzyme names, 1-based.
+
+Options:
+  -m, --min-score=<n>  Minimum score for fuzzy matches [default: 90]
+  -s, --separator=SEP  Separator used in input file [default: \t]
+  -h --help            Show this screen.
+  --version            Show version.
+"""
+
+import docopt
+import sys
+from pathlib import Path
+from thefuzz import process
+import ec_finder
+
+def parse_enzyme_dat(enzyme_dat_filename):
+    main_names = {}
+    alternative_names = {}
+    with open(enzyme_dat_filename) as f:
+        current_id = None
+        for line in f:
+            line = line.rstrip()
+            if line == "//":
+                current_id = None
+                continue
+            line_type = line[0:2]
+            if line_type == "ID":
+                current_id = line[5:]
+            elif line_type == "DE" and current_id is not None:
+                name = line[5:].rstrip(".")
+                if "Transferred entry" not in name:
+                  main_names[name] = current_id
+            elif line_type == "AN" and current_id is not None:
+                name = line[5:].rstrip(".")
+                if "Transferred entry" not in name:
+                  alternative_names[name] = current_id
+    return main_names, alternative_names
+
+def search_ec_code(enzyme_name, main_names, alternative_names):
+    if enzyme_name in main_names:
+        return "MAIN\t"+main_names[enzyme_name]+separator+enzyme_name
+    elif enzyme_name in alternative_names:
+        return "MAIN\t"+alternative_names[enzyme_name]+separator+enzyme_name
+    else:
+        match = process.extractOne(enzyme_name, main_names.keys())
+        if match is not None and match[1] > 80:
+          return "FUZZY:" + match[0] + separator + main_names[match[0]] +\
+              separator + enzyme_name
+        else:
+          match = process.extractOne(enzyme_name, alternative_names.keys())
+          if match is not None and match[1] > 80:
+            return "FUZZY:" + match[0] + separator + \
+                alternative_names[match[0]] +\
+                separator + enzyme_name
+          else:
+            return "NOT_FOUND\t\t"
+
+if __name__ == '__main__':
+    arguments = docopt.docopt(__doc__, version=ec_finder.__version__)
+    input_file = arguments["<input_file>"]
+    if not Path(input_file).is_file():
+      sys.stderr.write("Input file does not exist: " + input_file + "\n")
+      sys.exit(1)
+    if not arguments["<colnum>"].isdigit():
+      sys.stderr.write("Column number must be an integer. Found: " +\
+          arguments["<colnum>"] + "\n")
+      sys.exit(1)
+    colnum = int(arguments["<colnum>"]) - 1
+    if colnum < 0:
+      sys.stderr.write("Column number must be greater than 0. Found: " +\
+          arguments["<colnum>"] + "\n")
+      sys.exit(1)
+    if not arguments["--min-score"].isdigit():
+      sys.stderr.write("Minimum score must be an integer. Found: " +\
+          arguments["--min-score"] + "\n")
+      sys.exit(1)
+    min_score = int(arguments["--min-score"])
+    if min_score < 0 or min_score > 100:
+      sys.stderr.write("Minimum score must be between 0 and 100. Found: " +\
+          arguments["--min-score"] + "\n")
+      sys.exit(1)
+    separator = arguments["--separator"]
+    with open(input_file) as f:
+        for line in f:
+            line = line.rstrip()
+            columns = line.split(separator)
+            enzyme_name = columns[colnum]
+            ec_code_info = ec_finder.search(enzyme_name, min_score)
+            print(ec_code_info + separator + line)
+
