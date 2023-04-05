@@ -19,6 +19,15 @@ wheel:
 cleanup:
 	rm -rf dist/ build/ *.egg-info/
 
+tests:
+	pytest
+
+testcov:
+	pip install pytest-cov -qqq
+	pytest -v --cov=ec_finder --cov=bin \
+		     --cov-report=html \
+		     tests/
+
 upload: cleanup sdist wheel
 	cd dist; \
   	for file in *; do \

@@ -39,4 +39,6 @@ setup(name='ec_finder',
       install_requires=['loguru>=0.5.1', 'docopt>=0.6.2',
          "sh>=1.14.2", "thefuzz", "PlatformDirs", "python-Levenshtein"],
       setup_requires=['PlatformDirs'],
+      test_suite="pytest",
+      tests_require=['pytest', 'pytest-console-scripts', 'sh', 'pytest-cov'],
     )
