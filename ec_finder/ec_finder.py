@@ -58,12 +58,15 @@ def update(force_download=False):
     logger.info("No enzyme data file update needed.")
 
 def cleanup():
+  enable_logger("INFO")
+  logger.info("Data directory: {}".format(APPDATADIR))
   if APPDATADIR.exists():
     for path in Path(APPDATADIR).glob("**/*"):
         if path.is_file():
             path.unlink()
         elif path.is_dir():
             rmtree(path)
+  logger.info("All data in data directory was removed")
 
 ec_index = None
 
